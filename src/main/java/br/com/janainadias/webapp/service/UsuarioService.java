@@ -1,6 +1,7 @@
 package br.com.janainadias.webapp.service;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.util.StringUtils;
 
 import br.com.janainadias.webapp.entity.GrupoEntity;
 import br.com.janainadias.webapp.entity.PermissaoEntity;
@@ -92,7 +94,7 @@ public class UsuarioService implements UserDetailsService{
 		for(Long codigoGrupo : usuarioModel.getGrupos()){
 			
 			if(codigoGrupo != null){				
-				grupoEntity = grupoRepository.findOne(codigoGrupo);
+				grupoEntity = grupoRepository.getOne(codigoGrupo);
 				grupos.add(grupoEntity);			
 			}			
 		}
@@ -123,6 +125,64 @@ public class UsuarioService implements UserDetailsService{
 		return usuariosModel;
 		
 	}
+	
+	public void excluir(Long codigoUsuario){
+		
+		this.usuarioRepository.deleteById(codigoUsuario);
+		
+	}
+	
+	public UsuarioModel consultarUsuario(Long codigoUsuario){
+		
+		UsuarioEntity usuarioEntity = this.usuarioRepository.getOne(codigoUsuario);
+		
+		List<Long> grupos = new ArrayList<Long>();
+		
+		usuarioEntity.getGrupos().forEach(grupo ->{
+			 
+			grupos.add(grupo.getCodigo());
+ 
+		}); 
+		
+		return new UsuarioModel(
+					usuarioEntity.getCodigo(),
+					usuarioEntity.getNome(),
+					usuarioEntity.getLogin(),
+					null,
+					usuarioEntity.isAtivo(),
+					grupos);
+		
+	}
+	
+	public void alterarUsuario(UsuarioModel usuarioModel){
+		
+		UsuarioEntity usuarioEntity = this.usuarioRepository.getOne(usuarioModel.getCodigo());
+		
+		usuarioEntity.setAtivo(usuarioModel.isAtivo());
+		usuarioEntity.setLogin(usuarioModel.getLogin());
+		usuarioEntity.setNome(usuarioModel.getNome());
+		
+		if(!StringUtils.isEmpty(usuarioModel.getSenha())){
+			usuarioEntity.setSenha(new BCryptPasswordEncoder().encode(usuarioModel.getSenha()));				
+		}
+		
+		GrupoEntity grupoEntity = null;
+		List<GrupoEntity> grupos = new ArrayList<GrupoEntity>();
+		for (Long codigoGrupo : usuarioModel.getGrupos()) {
+			
+			if(codigoGrupo != null){
+				grupoEntity = grupoRepository.getOne(codigoGrupo);
+				grupos.add(grupoEntity);
+			}			
+		}
+		
+		usuarioEntity.setGrupos(grupos);
+		this.usuarioRepository.saveAndFlush(usuarioEntity);
+		
+	}
+	
+	
+	
 	
 	
 }

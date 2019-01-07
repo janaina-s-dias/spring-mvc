@@ -10,7 +10,5 @@ import br.com.janainadias.webapp.entity.UsuarioEntity;
 public interface GrupoRepository extends JpaRepository<GrupoEntity, Long> {
 	
 	List<GrupoEntity> findByUsuariosIn(UsuarioEntity usuarioEntity);
-
-	GrupoEntity findOne(Long codigoGrupo);
 	
 }
